@@ -8,11 +8,12 @@ import {
   TextInput,
   TouchableOpacity
 } from "react-native";
-
-import api from "../services/api";
-
 import MapView, { Marker, Callout } from "react-native-maps";
 import { MaterialIcons } from "@expo/vector-icons";
+
+import api from "../services/api";
+import { connect, disconnect, subscripeNewDevs } from "../services/socket";
+
 
 import {
   requestPermissionsAsync,
@@ -46,6 +47,21 @@ const Main = ({ navigation }) => {
     loadInitialPosition();
   }, []);
 
+  useEffect(() => {
+    subscripeNewDevs(dev => setDevs([...devs, dev]))
+  }, [devs])
+
+  function setupWebsocket() {
+    disconnect()
+    const { latitude, longitude } = currentRegion
+    connect(
+      latitude,
+      longitude,
+      techs
+    );
+    console.log('tentando acessar o socket')
+  }
+
   async function loadDevs() {
     const { latitude, longitude } = currentRegion;
     const response = await api.get("search", {
@@ -55,8 +71,9 @@ const Main = ({ navigation }) => {
         techs
       }
     });
-    console.log(response.data);
+    //console.log(response.data);
     setDevs(response.data);
+    setupWebsocket()
   }
 
   function handleRegionChanged(region) {
